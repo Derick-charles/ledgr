@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import Lightbox from './Lightbox';
 import { useEscape } from '../hooks/useEscape.js';
 import { useOffline } from '../hooks/useOffline';
 import { fmtR } from '../utils/backtestView';
@@ -9,6 +11,8 @@ const SIDE = { long: 'Long', short: 'Short', missed: 'Missed trade', breakeven: 
 export default function EntryView({ entry: e, locked, onEdit, onDelete, onClose }) {
   const offline = useOffline();
   useEscape(onClose);
+  const [shot, setShot] = useState(null);
+  const shots = (e.media || []).filter((m) => m.type !== 'link').map((m) => ({ url: m.url, type: m.type === 'video' ? 'video' : 'image' }));
   const tfs = tfList(e);
   const missed = e.side === 'missed';
   const tone = missed ? '' : e.r > 0 ? 'pos' : e.r < 0 ? 'neg' : '';
@@ -44,7 +48,7 @@ export default function EntryView({ entry: e, locked, onEdit, onDelete, onClose 
           {e.notes && <div className="bt-view-notes"><div className="bt-view-label">Notes</div>{e.notes}</div>}
           {e.media && e.media.length > 0 && (
             <div className="bt-view-shots">
-              {e.media.map((m) => <a key={m.id} href={m.url} target="_blank" rel="noopener noreferrer"><img src={m.url} alt="Screenshot" loading="lazy" /></a>)}
+              {e.media.map((m, i) => <button key={m.id} type="button" className="bt-shot" onClick={() => setShot(i)} aria-label={`View screenshot ${i + 1} of ${e.media.length}`}><img src={m.url} alt="" loading="lazy" /></button>)}
             </div>
           )}
         </div>
@@ -54,6 +58,7 @@ export default function EntryView({ entry: e, locked, onEdit, onDelete, onClose 
           {!offline && !locked && <button type="button" className="btn btn-primary" onClick={onEdit}>Edit</button>}
         </div>
       </div>
+      <Lightbox items={shots} index={shot} onClose={() => setShot(null)} onNavigate={setShot} />
     </div>
   );
 }

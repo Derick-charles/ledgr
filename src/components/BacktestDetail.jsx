@@ -89,19 +89,25 @@ const SHOW = 24;
 
 const byNewest = (a, b) => `${b.date || ''} ${b.time || ''} ${b.createdAt || 0}`.localeCompare(`${a.date || ''} ${a.time || ''} ${a.createdAt || 0}`);
 
-function Entries({ entries, offline, locked, onNew, onOpen }) {
+function Entries({ entries, offline, locked, day, onClearDay, onNew, onOpen }) {
   const [all, setAll] = useState(false);
-  const list = useMemo(() => [...entries].sort(byNewest), [entries]);
-  const shown = all ? list : list.slice(0, SHOW);
+  const list = useMemo(() => [...entries].filter((e) => !day || e.date === day).sort(byNewest), [entries, day]);
+  const shown = all || day ? list : list.slice(0, SHOW);
   return (
     <div className="bt-card-block">
       <div className="bt-block-title">
-        <b>Entries <span className="bt-count">{entries.length}</span></b>
+        <b>Entries <span className="bt-count">{day ? `${list.length} of ${entries.length}` : entries.length}</span></b>
         <button type="button" className="btn btn-primary bt-new-entry" onClick={onNew} disabled={offline || locked} title={locked ? 'This session is closed — reopen it to add entries' : offline ? 'Adding an entry needs a connection' : undefined}>+ New entry</button>
       </div>
+      {day && (
+        <div className="bt-dayfilter">
+          <span>Showing {day}</span>
+          <button type="button" onClick={onClearDay} aria-label="Show all days">✕ Show all</button>
+        </div>
+      )}
       {locked && <p className="bt-fine" style={{ marginTop: 0 }}>This session is closed, so its entries are locked. Reopen it to add or change them.</p>}
-      {entries.length === 0 ? (
-        <p className="bt-prep-sub">No entries yet. Add each trade you backtest — the win rate, drawdown and checklist all update from them.</p>
+      {entries.length === 0 || list.length === 0 ? (
+        <p className="bt-prep-sub">{entries.length > 0 ? 'No entries on this day.' : 'No entries yet. Add each trade you backtest — the win rate, drawdown and checklist all update from them.'}</p>
       ) : (
         <>
         <div className="bt-grid bt-entry-grid">
@@ -131,7 +137,7 @@ function Entries({ entries, offline, locked, onNew, onOpen }) {
             return <div key={e.id} className="bt-card" {...clickable(() => onOpen(e), { label: `Open entry ${e.symbol || ''} ${e.date || ''}` })}>{body}</div>;
           })}
         </div>
-        {!all && list.length > SHOW && <button type="button" className="bt-link-btn" style={{ marginTop: 10 }} onClick={() => setAll(true)}>Show all {list.length}</button>}
+        {!all && !day && list.length > SHOW && <button type="button" className="bt-link-btn" style={{ marginTop: 10 }} onClick={() => setAll(true)}>Show all {list.length}</button>}
         </>
       )}
     </div>
@@ -144,6 +150,7 @@ export default function BacktestDetail({ item, rules: defaultRules, index, total
   const [entryForm, setEntryForm] = useState(null); // null | { initial }
   const [viewId, setViewId] = useState(null);       // the entry being looked at
   const [full, setFull] = useState(null);
+  const [day, setDay] = useState(null);           // a calendar day picked to filter entries
   const [failed, setFailed] = useState(false);
   const s = item.stats;
   const challenge = item.challenge || { overall: 'empty', phases: [] };
@@ -222,10 +229,7 @@ export default function BacktestDetail({ item, rules: defaultRules, index, total
             <div className="bt-stat"><b>{s.trades ? `${(rules.ddType === 'static' ? s.lowR : s.maxDDR).toFixed(1)}R` : '—'}</b><span>Max drawdown</span></div>
           </div>
           {full && <RCurve results={full.results} />}
-          {full && Object.keys(daily).length > 0 && <PeriodCalendar daily={daily} title="P&L calendar" />}
-          {full
-            ? <Entries entries={entries} offline={offline} locked={!!item.closed} onNew={() => setEntryForm({ initial: null })} onOpen={(e) => setViewId(e.id)} />
-            : <div className="bt-card-block"><p className="bt-prep-sub">{failed ? 'Entries load once you are online.' : 'Loading entries…'}</p></div>}
+          {full && Object.keys(daily).length > 0 && <PeriodCalendar daily={daily} title="P&L calendar" selectedDay={day} onPickDay={(d) => setDay((cur) => (cur === d ? null : d))} />}
         </div>
 
         <div className="bt-detail-side">
@@ -321,6 +325,11 @@ export default function BacktestDetail({ item, rules: defaultRules, index, total
             </div>
           )}
         </div>
+      </div>
+      <div className="bt-detail-entries">
+        {full
+            ? <Entries entries={entries} offline={offline} locked={!!item.closed} day={day} onClearDay={() => setDay(null)} onNew={() => setEntryForm({ initial: null })} onOpen={(e) => setViewId(e.id)} />
+            : <div className="bt-card-block"><p className="bt-prep-sub">{failed ? 'Entries load once you are online.' : 'Loading entries…'}</p></div>}
       </div>
       {viewing && !entryForm && (
         <EntryView locked={!!item.closed} entry={viewing} onClose={() => setViewId(null)} onEdit={() => { setEntryForm({ initial: viewing }); }} onDelete={() => deleteEntry(viewing)} />

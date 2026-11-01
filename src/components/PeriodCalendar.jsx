@@ -6,7 +6,7 @@ import MonthTiles from './MonthTiles';
 // P&L calendar for the backtest journal, in R. Days view = one month of day
 // boxes; Months view = the year's twelve monthly totals. `daily` is
 // { 'YYYY-MM-DD': { v: R that day, count } }.
-export default function PeriodCalendar({ daily, title = 'Calendar' }) {
+export default function PeriodCalendar({ daily, title = 'Calendar', selectedDay = null, onPickDay = null }) {
   const start = useMemo(() => {
     const last = Object.keys(daily).sort().pop();
     const d = last ? new Date(`${last}T00:00:00`) : new Date();
@@ -60,8 +60,11 @@ export default function PeriodCalendar({ daily, title = 'Calendar' }) {
               const tone = !d ? '' : d.v > 0 ? 'pos' : d.v < 0 ? 'neg' : 'flat';
               const a = d && max ? 0.14 + 0.3 * (Math.abs(d.v) / max) : 0;
               const style = d && tone !== 'flat' ? { background: `rgba(var(--${tone === 'pos' ? 'positive' : 'negative'}-rgb), ${a.toFixed(2)})` } : undefined;
+              const pick = onPickDay && d;
               return (
-                <div key={i} className={`pc-cell ${tone}${c.dateId === today ? ' today' : ''}`} style={style} title={d ? `${c.dateId}: ${fmtR(d.v)}, ${d.count} entr${d.count === 1 ? 'y' : 'ies'}` : c.dateId}>
+                <div key={i} className={`pc-cell ${tone}${c.dateId === today ? ' today' : ''}${pick ? ' pickable' : ''}${selectedDay === c.dateId ? ' picked' : ''}`} style={style}
+                  title={d ? `${c.dateId}: ${fmtR(d.v)}, ${d.count} entr${d.count === 1 ? 'y' : 'ies'}${pick ? ' — click to show only this day' : ''}` : c.dateId}
+                  {...(pick ? { role: 'button', tabIndex: 0, 'aria-pressed': selectedDay === c.dateId, onClick: () => onPickDay(c.dateId), onKeyDown: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onPickDay(c.dateId); } } } : {})}>
                   <span className="pc-d">{c.dayNum}</span>
                   {d && <span className="pc-v">{fmtR(d.v)}</span>}
                 </div>
