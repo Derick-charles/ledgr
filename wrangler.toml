@@ -22,7 +22,7 @@ run_worker_first = ["/api/*"]
 [[d1_databases]]
 binding = "DB"
 database_name = "ledgr"
-database_id = "PASTE-YOUR-DATABASE-ID-HERE"
+database_id = "0e161f3d-ec98-4888-b75b-d3dd78959e79"
 
 [[r2_buckets]]
 binding = "BUCKET"
