@@ -304,3 +304,9 @@ Nothing on Netlify is changed or deleted; you can repeat this as often as you li
 6. **Check:** `npx wrangler d1 execute ledgr --remote --command "SELECT store, COUNT(*) FROM blobs GROUP BY store"` — the numbers should match step 2.
 
 Delete the token on Netlify afterwards, and don't share `migration-data/` (it contains your whole journal and password hashes).
+
+## v29 interface polish
+Roomier spacing (sessions ↔ calendar, cards, detail page); on desktop an open session's entries run full width below the stats; click a day with entries in a session's P&L calendar to show only that day (click again or "Show all" to clear); click a screenshot in an entry to view it large (arrow keys / Esc); session cards show a progress strip per phase toward the profit target (green passed, red failed).
+
+## v30
+The backtest P&L calendar has a **Week** column (that week's total in R). The sidebar's account links (Sync now, Merge accounts, Security, Clean up unused images, Sign out) now live in one **Account** button at the bottom of the sidebar that opens a window; an amber dot on it means no recovery code has been made yet. "Show all" in the day filter is a proper button. (The live journal calendar already had week totals.)
