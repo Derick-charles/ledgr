@@ -4,3 +4,4 @@ dist
 .env
 .DS_Store
 migration-data/
+package-lock.json
