@@ -30,6 +30,27 @@ export function BacktestThumb({ item }) {
   );
 }
 
+// One thin bar per phase: how far the session's profit is toward the target,
+// green once passed, red if the phase failed.
+function Strips({ challenge }) {
+  const phases = challenge && challenge.phases ? challenge.phases : [];
+  if (!phases.length || phases.every((p) => p.status === 'pending')) return null;
+  return (
+    <div className="bt-strips" aria-hidden="true">
+      {phases.map((p, i) => {
+        const target = p.rules && p.rules.target ? p.rules.target : 0;
+        const pct = p.status === 'passed' || p.status === 'failed' ? 100 : target > 0 ? Math.max(0, Math.min(100, ((p.netPct || 0) / target) * 100)) : 0;
+        return (
+          <div key={i} className="bt-strip" title={`${phases.length > 1 ? `Phase ${i + 1}: ` : ''}${Math.round(pct)}% of the target`}>
+            {phases.length > 1 && <span>P{i + 1}</span>}
+            <div className={`bt-strip-bar ${p.status}`}><i style={{ width: `${pct}%` }} /></div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function BacktestCard({ item, rules, onOpen }) {
   const meta = STATUS_META[item.status] || STATUS_META.review;
   const flags = cardFlags(item, rules);
@@ -44,6 +65,7 @@ export default function BacktestCard({ item, rules, onOpen }) {
         <div className="bt-card-stats">
           {s.trades ? `${Math.round(s.winRate)}% · ${fmtR(s.netR)} · ${s.trades} ${s.trades === 1 ? 'entry' : 'entries'}` : 'No entries yet'}
         </div>
+        <Strips challenge={item.challenge} />
         <div className="bt-tags">
           <span className={`bt-tag ${meta.cls}`}>{meta.label}</span>
           {flags.map((f) => <span key={f.label} className={`bt-tag ${f.tone}`}>{f.label}</span>)}
