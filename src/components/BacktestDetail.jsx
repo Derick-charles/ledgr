@@ -102,7 +102,7 @@ function Entries({ entries, offline, locked, day, onClearDay, onNew, onOpen }) {
       {day && (
         <div className="bt-dayfilter">
           <span>Showing {day}</span>
-          <button type="button" onClick={onClearDay} aria-label="Show all days">✕ Show all</button>
+          <button type="button" className="btn btn-primary" onClick={onClearDay}>Show all</button>
         </div>
       )}
       {locked && <p className="bt-fine" style={{ marginTop: 0 }}>This session is closed, so its entries are locked. Reopen it to add or change them.</p>}

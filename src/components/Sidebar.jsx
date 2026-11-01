@@ -2,10 +2,9 @@ import { useEffect, useState } from 'react';
 import { clickable } from '../utils/a11y.js';
 import { SECTION_IDS, scrollToSection } from '../utils/sections';
 import ThemeSwitcher from './ThemeSwitcher';
-import { api } from '../api';
+import AccountMenu, { AccountButton } from './AccountMenu';
 import SecurityModal from './SecurityModal';
 import MergeModal from './MergeModal';
-import { useOffline } from '../hooks/useOffline';
 
 const NAV_GROUPS = [
   { label: 'Journal', items: ['Dashboard', 'Trade Log', 'Daily Journal', 'Notebook'] },
@@ -21,18 +20,10 @@ const BACKTEST_NAV = [
 ];
 
 export default function Sidebar({ user, onSignOut, view = 'live', onViewChange }) {
-  const offline = useOffline();
   const [open, setOpen] = useState(false); // mobile drawer only
   const [securityOpen, setSecurityOpen] = useState(false);
   const [mergeOpen, setMergeOpen] = useState(false);
-  const [sync, setSync] = useState('idle'); // idle | busy | done | fail
-  // Rebuilds the lists from the saved records, then every screen re-reads.
-  async function handleSync() {
-    setSync('busy');
-    try { await api.post('/api/sync', {}); window.dispatchEvent(new Event('ledgr:refresh')); setSync('done'); }
-    catch { setSync('fail'); }
-    setTimeout(() => setSync('idle'), 3000);
-  }
+  const [accountOpen, setAccountOpen] = useState(false);
   const [recoveryMade, setRecoveryMade] = useState(false);
   const [activeId, setActiveId] = useState(SECTION_IDS.Dashboard);
 
@@ -55,21 +46,6 @@ export default function Sidebar({ user, onSignOut, view = 'live', onViewChange }
     });
     return () => observer.disconnect();
   }, []);
-
-  // Removes uploaded images/clips that nothing refers to any more (e.g. from
-  // a save that failed part-way). Previews the count and asks first.
-  async function handleCleanup() {
-    try {
-      const { count, bytes } = await api.get('/api/media?orphans=1');
-      if (!count) { alert('Nothing to clean up — every uploaded file is still in use.'); return; }
-      const size = bytes ? ` (about ${bytes >= 1048576 ? `${(bytes / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`})` : '';
-      if (!window.confirm(`Delete ${count} unused image/clip file${count !== 1 ? 's' : ''}${size}? They aren't attached to any trade, journal entry or certificate. This can't be undone.`)) return;
-      const { deleted } = await api.del('/api/media?orphans=1');
-      alert(`Removed ${deleted} unused file${deleted !== 1 ? 's' : ''}.`);
-    } catch (e) {
-      alert(`Could not clean up: ${e.message}`);
-    }
-  }
 
   function handleNavClick(label) {
     const id = SECTION_IDS[label];
@@ -138,22 +114,20 @@ export default function Sidebar({ user, onSignOut, view = 'live', onViewChange }
           <ThemeSwitcher />
           {user && (
             <div className="user-box">
-              <div className="user-name" title={user.email}>{user.name || user.email}</div>
-              {user.name && <div className="user-email">{user.email}</div>}
-              <button type="button" className="signout-btn" onClick={handleSync} disabled={offline || sync === 'busy'}>
-                {sync === 'busy' ? 'Syncing…' : sync === 'done' ? 'Synced ✓' : sync === 'fail' ? "Couldn't sync — try again" : 'Sync now'}
-              </button>
-              <button type="button" className="signout-btn" onClick={handleCleanup} disabled={offline}>Clean up unused images</button>
-              <button type="button" className="signout-btn" onClick={() => setMergeOpen(true)} disabled={offline}>Merge accounts</button>
-              <button type="button" className="signout-btn" onClick={() => setSecurityOpen(true)} disabled={offline}>
-                Security{!user.hasRecovery && !recoveryMade && <span className="security-dot" title="No recovery code yet" aria-label="no recovery code yet"> ●</span>}
-              </button>
-              <button type="button" className="signout-btn" onClick={onSignOut} disabled={offline} title={offline ? 'Signing out needs a connection' : undefined}>Sign out</button>
+              <AccountButton user={user} alert={!user.hasRecovery && !recoveryMade} onClick={() => { setAccountOpen(true); }} />
             </div>
           )}
           <p>No broker sync. Every trade logged by hand, on purpose.</p>
         </div>
       </aside>
+      {accountOpen && user && (
+        <AccountMenu
+          user={user} needsRecovery={!user.hasRecovery && !recoveryMade}
+          onMerge={() => { setAccountOpen(false); setOpen(false); setMergeOpen(true); }}
+          onSecurity={() => { setAccountOpen(false); setOpen(false); setSecurityOpen(true); }}
+          onSignOut={onSignOut} onClose={() => setAccountOpen(false)}
+        />
+      )}
       {mergeOpen && user && <MergeModal user={user} onClose={() => setMergeOpen(false)} />}
       {securityOpen && user && <SecurityModal user={user} onRecoveryMade={() => setRecoveryMade(true)} onClose={() => setSecurityOpen(false)} />}
     </>
