@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>LEDGR — Trading Journal</title>
+
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#0A0C16" />
+  <meta name="description" content="A manual-first, privacy-first trading journal." />
+
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="LEDGR" />
+
+  <!-- Applied before anything paints, so a returning visitor's chosen theme
+       shows up immediately instead of flashing Glass Cockpit for a frame. It
+       also loads that theme's fonts and sets the browser chrome color. -->
+  <script>
+    (function () {
+      try {
+        var META = { 'glass-cockpit': '#0A0C16', 'amber-terminal': '#0B0905', 'slate-daylight': '#F1F3F8', 'midnight-aurora': '#050814', 'synthwave': '#0D0221', 'oled-black': '#000000' };
+        var FONTS = {
+          'amber-terminal':  'https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap',
+          'slate-daylight':  'https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap',
+          'midnight-aurora': 'https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap',
+          'synthwave':       'https://fonts.googleapis.com/css2?family=Tektur:wght@400;500;600;700;800&family=Jura:wght@400;500;600;700&display=swap',
+          'oled-black':      'https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap'
+        };
+        var theme = localStorage.getItem('ledgr-theme');
+        if (theme === 'matrix') { theme = 'synthwave'; localStorage.setItem('ledgr-theme', theme); } // Matrix was replaced by Synthwave
+        if (theme && META[theme]) {
+          document.documentElement.setAttribute('data-theme', theme);
+          var m = document.querySelector('meta[name="theme-color"]');
+          if (m) m.setAttribute('content', META[theme]);
+          var ios = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
+          if (ios) ios.setAttribute('content', theme === 'slate-daylight' ? 'default' : 'black-translucent');
+          if (FONTS[theme]) {
+            var l = document.createElement('link');
+            l.rel = 'stylesheet'; l.href = FONTS[theme]; l.setAttribute('data-theme-font', theme);
+            document.head.appendChild(l);
+          }
+        }
+        if (localStorage.getItem('ledgr-cvd-safe') === 'true') document.documentElement.setAttribute('data-cvd', 'true');
+      } catch (e) { /* localStorage unavailable (private mode, etc) — default theme renders instead */ }
+    })();
+  </script>
+
+  <link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+</html>

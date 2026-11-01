@@ -1,0 +1,29 @@
+# LEDGR on Cloudflare (free plan). Deploy with:  npm run build  &&  npx wrangler deploy
+name = "ledgr"
+main = "cloudflare/worker.js"
+compatibility_date = "2025-09-01"
+# nodejs_compat lets the backend keep using node:crypto and Buffer;
+# the second flag makes secrets/variables available as process.env.*
+compatibility_flags = ["nodejs_compat", "nodejs_compat_populate_process_env"]
+
+# The built web app (the `dist` folder). Only /api/* runs the Worker; every
+# other address serves the app, falling back to index.html (single-page app).
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+run_worker_first = ["/api/*"]
+
+# The backend imports "@netlify/blobs"; on Cloudflare that name points at the
+# D1/R2 version instead, so no backend file needs to change.
+[alias]
+"@netlify/blobs" = "./cloudflare/blobs-shim.js"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "ledgr"
+database_id = "PASTE-YOUR-DATABASE-ID-HERE"
+
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "ledgr-media"
